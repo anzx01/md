@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:apply-0006": "node --loader tsx src/db/apply-migration.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -37,8 +38,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.16",
-    "@types/node": "^24",
-    "@types/react": "^19",
+    "@types/node": "^24.10.4",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.5",
     "eslint": "^9",
@@ -46,6 +47,6 @@
     "postcss": "^8",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "tailwindcss": "^4.1.16",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }

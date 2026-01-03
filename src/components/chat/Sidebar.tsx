@@ -79,7 +79,7 @@ export function Sidebar({
         <div className="flex-shrink-0 border-b border-slate-200 p-4 dark:border-slate-700">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Discussions
+              辩论历史
             </h2>
             {/* Close button for mobile */}
             <button
@@ -96,7 +96,7 @@ export function Sidebar({
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
           >
             <Plus className="h-4 w-4" />
-            New Discussion
+            新建辩论
           </button>
         </div>
 

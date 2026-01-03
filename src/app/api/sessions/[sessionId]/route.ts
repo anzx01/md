@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { plannerSession, discussionMessage } from "@/db/schema/planner";
+import { debateSession, debateMessage } from "@/db/schema/planner";
 import { eq, and, desc } from "drizzle-orm";
 
 // PATCH /api/sessions/[sessionId] - Rename session
@@ -18,9 +18,9 @@ export async function PATCH(
     }
 
     await db
-      .update(plannerSession)
+      .update(debateSession)
       .set({ title })
-      .where(eq(plannerSession.id, sessionId));
+      .where(eq(debateSession.id, sessionId));
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -40,15 +40,15 @@ export async function DELETE(
   try {
     const { sessionId } = await params;
 
-    // Delete all messages first
+    // Delete all messages first (cascade should handle this, but being explicit)
     await db
-      .delete(discussionMessage)
-      .where(eq(discussionMessage.sessionId, sessionId));
+      .delete(debateMessage)
+      .where(eq(debateMessage.sessionId, sessionId));
 
     // Delete the session
     await db
-      .delete(plannerSession)
-      .where(eq(plannerSession.id, sessionId));
+      .delete(debateSession)
+      .where(eq(debateSession.id, sessionId));
 
     return NextResponse.json({ success: true });
   } catch (error) {

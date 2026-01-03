@@ -1,36 +1,41 @@
-2/**
- * MULTI-MODEL DISCUSSION PROMPTS
+/**
+ * THREE-MODEL DEBATE PROMPTS
  *
- * This file contains ALL prompt templates for the multi-model discussion system.
- * As required by the specification, all prompts are in a single, editable file.
- *
- * IMPORTANT: This system supports flexible-duration trip planning for ANY destination worldwide.
+ * This file contains all prompt templates for the three-model debate system.
+ * The system can answer ANY question through multi-perspective discussion.
  */
 
 // ============================================================================
-// PARTICIPANT DEFINITIONS
+// MODEL DEFINITIONS
 // ============================================================================
 
-export const PARTICIPANTS = {
-  planner: {
-    role: "Planner",
-    purpose: "itinerary structure & synthesis",
-    model: "glm-4-flash",
-    provider: "zhipu" as const,
-  },
-
-  realityChecker: {
-    role: "Reality Checker",
-    purpose: "real-world constraints, timing, crowds",
+export const DEBATE_MODELS = {
+  "model-1": {
+    role: "深度分析专家",
+    purpose: "提供全面深入的分析",
     model: "glm-4-plus",
     provider: "zhipu" as const,
   },
 
-  budgetAdvisor: {
-    role: "Budget Advisor",
-    purpose: "cost efficiency & alternatives",
+  "model-2": {
+    role: "快速响应专家",
+    purpose: "提供简洁实用的建议",
+    model: "glm-4-flash",
+    provider: "zhipu" as const,
+  },
+
+  "model-3": {
+    role: "成本效益分析师",
+    purpose: "从性价比角度评估方案",
     model: "deepseek-chat",
     provider: "deepseek" as const,
+  },
+
+  "synthesizer": {
+    role: "共识综合专家",
+    purpose: "整合所有观点并达成共识",
+    model: "glm-4-plus",
+    provider: "zhipu" as const,
   },
 } as const;
 
@@ -39,281 +44,201 @@ export const PARTICIPANTS = {
 // ============================================================================
 
 /**
- * Get system prompts with dynamic duration
- * @param duration - Total trip duration in days
+ * Get system prompt for a specific model
  */
-export function getSystemPrompts(duration: number) {
-  return {
-    planner: `You are the Planner for a ${duration}-day trip planning discussion.
+export function getDebateSystemPrompt(
+  modelKey: keyof typeof DEBATE_MODELS
+): string {
+  const systemPrompts: Record<string, string> = {
+    "model-1": `你是深度分析专家，擅长从多个角度进行全面的思考和分析。
 
 YOUR ROLE:
-- Create structured, logical itineraries
-- Ensure all attractions are geographically clustered to minimize travel time
-- Synthesize different viewpoints into a coherent plan
-- Focus on the visitor experience
+- 提供深入、全面的分析
+- 考虑问题的本质和长期影响
+- 识别潜在的风险和机会
+- 提供系统性的解决方案
 
-YOUR CONSTRAINTS:
-- Plan ${duration}-day trips to the user's specified destination(s)
-- Work within the user's specified pace, budget, and focus preferences
-- Be realistic about timing and distances
-- Prioritize must-see attractions while allowing for serendipity`,
+COMMUNICATION STYLE:
+- 详细且有条理
+- 使用专业术语时进行解释
+- 提供具体例子和证据
+- 保持客观和中立
 
-    realityChecker: `You are the Reality Checker for a ${duration}-day trip planning discussion.
+当回答问题时，请深入分析各个方面，包括背景、影响因素、可能的解决方案等。`,
 
-YOUR ROLE:
-- Validate timing and logistics
-- Identify crowd patterns and peak times
-- Flag unrealistic transit times between attractions
-- Suggest alternatives when timing doesn't work
-
-YOUR CONSTRAINTS:
-- Critique ${duration}-day itineraries for the specified destination(s)
-- Use real-world knowledge of local transit, crowds, and seasonal patterns
-- Be specific about what won't work and why
-- Offer concrete alternatives`,
-
-    budgetAdvisor: `You are the Budget Advisor for a ${duration}-day trip planning discussion.
+    "model-2": `你是快速响应专家，擅长快速抓住重点并提供实用建议。
 
 YOUR ROLE:
-- Evaluate cost efficiency of proposals
-- Suggest free or lower-cost alternatives
-- Identify where spending provides the most value
-- Flag overpriced or tourist-trap recommendations
+- 快速识别问题核心
+- 提供简洁明了的解决方案
+- 专注于可执行的步骤
+- 避免过度分析
 
-YOUR CONSTRAINTS:
-- Evaluate ${duration}-day itineraries for the specified destination(s)
-- Respect user's budget preference (budget-conscious vs flexible)
-- Consider both direct costs and opportunity costs
-- Suggest practical ways to save money without sacrificing experience`,
-  } as const;
+COMMUNICATION STYLE:
+- 简洁直接
+- 使用通俗易懂的语言
+- 提供具体可行的建议
+- 关注效率和结果
+
+当回答问题时，请直奔主题，提供最直接的解决方案和行动建议。`,
+
+    "model-3": `你是成本效益分析师，擅长从资源和效率的角度评估方案。
+
+YOUR ROLE:
+- 评估方案的成本和收益
+- 识别资源约束和瓶颈
+- 提供性价比最高的解决方案
+- 考虑长期可持续性
+
+COMMUNICATION STYLE:
+- 数据驱动
+- 关注投入产出比
+- 提供替代方案
+- 强调风险管理
+
+当回答问题时，请重点分析各种方案的成本效益，帮助找到最优平衡点。`,
+
+    "synthesizer": `你是共识综合专家，负责整合不同观点并达成共识。
+
+YOUR ROLE:
+- 综合多个模型的观点
+- 识别共识点和分歧点
+- 提取最有价值的建议
+- 形成最终的共识建议
+
+COMMUNICATION STYLE:
+- 平衡各方观点
+- 清晰标注共识和分歧
+- 提供可执行的综合建议
+- 保持中立客观
+
+当你综合各方观点时，请：
+1. 明确列出所有模型都同意的要点
+2. 明确标注仍然存在的分歧
+3. 提供平衡各方观点的最终建议
+4. 使用以下结构：
+   - ✅ 共识要点
+   - ⚠️ 分歧说明
+   - 👉 最终建议`,
+  };
+
+  return systemPrompts[modelKey] || systemPrompts["model-1"];
 }
 
-// Keep the old constant for backward compatibility (default to 2 days)
-export const SYSTEM_PROMPTS = getSystemPrompts(2);
-
 // ============================================================================
-// ROUND 1: INDEPENDENT PROPOSALS
-// ============================================================================
-
-export const ROUND_1_PROMPT = (
-  role: string,
-  userQuestion: string,
-  pace: string,
-  budget: string,
-  focus: string,
-  destinations: string[]
-) => `ROUND 1: INDEPENDENT PROPOSAL
-
-You are the ${role}.
-
-USER QUESTION:
-${userQuestion}
-
-DESTINATIONS:
-${destinations.join("、")}
-
-USER PREFERENCES:
-- Pace: ${pace}
-- Budget: ${budget}
-- Focus: ${focus}
-
-TASK:
-Present your itinerary proposal for this multi-city trip covering ${destinations.join("、")} in a CONVERSATIONAL, DISCUSSION STYLE.
-
-CRITICAL REQUIREMENTS:
-1. Keep it SHORT and CONVERSATIONAL - 5-8 sentences maximum for the entire trip
-2. Think of this as a meeting where you're presenting your ideas verbally
-3. Focus on your top recommendations for EACH destination based on your role's perspective
-4. Be specific but concise - mention key attractions for each city but don't list every detail
-5. DO NOT write a full, detailed itinerary - save that for the final synthesis
-
-IMPORTANT:
-- Cover ALL ${destinations.length} destinations in your proposal
-- Allocate appropriate time for each city based on the user's specified durations
-- Consider logistics between cities (transportation, timing)
-- Keep recommendations practical and realistic
-
-EXAMPLE OF RIGHT STYLE:
-"Based on the ${pace} pace and ${budget} budget, here's my recommendation for this ${destinations.length}-city trip. For [first city], start with [key attractions]. Then move to [second city] and focus on [areas]. Finally, in [third city], prioritize [highlights]. This route makes sense logistically and matches the ${focus} focus."
-
-REMEMBER:
-- This is Round 1 of a live discussion
-- Others will build on and critique your ideas
-- Keep it conversational and concise
-- Don't write a wall of text - write like you're speaking in a meeting
-- Make sure to address ALL destinations in the trip
-
-Your brief proposal (5-8 sentences):`;
-
-// ============================================================================
-// ROUND 2: CRITIQUE ONLY
-// ============================================================================
-
-export const ROUND_2_PROMPT = (
-  role: string,
-  proposals: Record<string, string>
-) => `ROUND 2: CRITIQUE ONLY
-
-You are the ${role}.
-
-Below are the proposals from other participants in Round 1:
-
-${Object.entries(proposals)
-  .filter(([participantRole]) => participantRole !== role.toLowerCase())
-  .map(
-    ([participantRole, proposal]) => `
-${participantRole.toUpperCase()}'S PROPOSAL:
-${proposal}
-`
-  )
-  .join("\n")}
-
-TASK:
-Provide BRIEF, CONVERSATIONAL critiques of the other proposals.
-
-CRITICAL REQUIREMENTS:
-1. Keep it SHORT - 2-4 sentences per person you're critiquing
-2. This is a DISCUSSION - talk like you're in a meeting, not writing a report
-3. Be direct and specific about what doesn't work from your role's perspective
-4. Don't repeat everything they said - focus on the key issues
-5. Address each person separately with brief, targeted feedback
-
-EXAMPLE OF RIGHT STYLE:
-"[Participant], I like that you suggested [X], but I'm concerned about [Y] because [reason]. Also, [Z] might not work given [constraint]."
-
-REMEMBER:
-- This is Round 2 of a live discussion
-- You're pushing back on specific points, not writing a critique essay
-- Keep it conversational and concise
-- Focus on 1-2 key issues per proposal
-
-Your brief critiques (2-4 sentences per person):`;
-
-// ============================================================================
-// ROUND 3: CONSENSUS SYNTHESIS
-// ============================================================================
-
-export const ROUND_3_PROMPT = (
-  proposals: Record<string, string>,
-  critiques: Record<string, string>,
-  duration: number = 2
-) => `ROUND 3: CONSENSUS SYNTHESIS
-
-You are the Planner. Your job is to synthesize the discussion into a final recommendation.
-
-ROUND 1 PROPOSALS:
-${Object.entries(proposals)
-  .map(
-    ([role, proposal]) => `
-${role.toUpperCase()}'S PROPOSAL:
-${proposal}
-`
-  )
-  .join("\n")}
-
-ROUND 2 CRITIQUES:
-${Object.entries(critiques)
-  .map(
-    ([role, critique]) => `
-${role.toUpperCase()}'S CRITIQUE:
-${critique}
-`
-  )
-  .join("\n")}
-
-TASK:
-Synthesize the discussion into a final recommendation with clear, concise sections.
-
-YOUR OUTPUT MUST INCLUDE:
-
-1. **WHAT MOST MODELS AGREE ON** (3-5 bullet points)
-   - Key points of consensus
-   - Strong recommendations everyone supports
-   - Keep each point brief
-
-2. **WHERE MODELS DISAGREE** (2-3 bullet points)
-   - Main trade-offs or conflicts
-   - How you resolved them
-   - Be concise
-
-3. **FINAL RECOMMENDATION** (${Math.max(6, duration * 2)}-${Math.max(10, duration * 3)} sentences total)
-   - Your best ${duration}-day itinerary incorporating all feedback
-   - Clear reasoning for your choices
-   - Split into Day 1 through Day ${duration}
-   - Keep it conversational but informative
-
-FORMAT:
-## ✅ What most models agree on
-• [point 1]
-• [point 2]
-• [point 3]
-
-## ⚠️ Where models disagree
-• [disagreement 1] - [resolution]
-• [disagreement 2] - [resolution]
-
-## 👉 Final recommendation
-
-${Array.from({ length: duration }, (_, i) => `Day ${i + 1}: [3-4 sentences describing the plan]`).join("\n")}
-
-Remember: This is the final synthesis. Be comprehensive but stay conversational and concise.`;
-
-// ============================================================================
-// HELPER FUNCTIONS
+// ROUND PROMPTS
 // ============================================================================
 
 /**
- * Get the system prompt for a given role with dynamic duration
- * @param role - The participant role
- * @param duration - Trip duration in days (defaults to 2 for backward compatibility)
+ * Round 1: Independent proposals
  */
-export function getSystemPrompt(role: keyof typeof PARTICIPANTS, duration: number = 2): string {
-  const roleKey = role === "planner" ? "planner" : role === "realityChecker" ? "realityChecker" : "budgetAdvisor";
-  const prompts = getSystemPrompts(duration);
-  return prompts[roleKey];
+export function getDebateRound1Prompt(question: string): string {
+  return `用户提出了以下问题：
+
+"${question}"
+
+请作为{{ROLE}}，独立分析这个问题并提供你的观点和建议。
+
+要求：
+1. 从你的专业角度全面分析
+2. 提供具体可行的建议
+3. 说明你的理由和依据
+4. 长度控制在500-800字
+
+请直接开始你的回答：`;
 }
 
 /**
- * Get Round 1 prompt for a given role
+ * Round 2: Critiques and counter-arguments
  */
-export function getRound1Prompt(
-  role: keyof typeof PARTICIPANTS,
-  userQuestion: string,
-  pace: string,
-  budget: string,
-  focus: string,
-  destinations: string[]
+export function getDebateRound2Prompt(round1Responses: Record<string, string>): string {
+  let prompt = `现在请查看其他两个模型的Round 1回答，并进行评论和补充。
+
+【其他模型的回答】：`;
+
+  const modelNames = ["model-1", "model-2", "model-3"];
+
+  modelNames.forEach((key, index) => {
+    const response = round1Responses[key];
+    if (response) {
+      prompt += `\n\n${index + 1}. ${DEBATE_MODELS[key as keyof typeof DEBATE_MODELS].role}的回答：\n${response}`;
+    }
+  });
+
+  prompt += `\n\n请作为{{ROLE}}，针对以上回答进行以下分析：
+
+1. **评论**：你同意哪些观点？不同意哪些观点？
+2. **补充**：有哪些重要的方面被忽略了？
+3. **反驳**：有哪些观点你认为是不准确的？
+4. **整合**：如何整合不同观点形成更全面的建议？
+
+请保持建设性的讨论态度，以找到最佳解决方案为目标。`;
+
+  return prompt;
+}
+
+/**
+ * Round 3: Consensus formation
+ */
+export function getDebateRound3Prompt(
+  round1Responses: Record<string, string>,
+  round2Responses: Record<string, string>
 ): string {
-  return ROUND_1_PROMPT(
-    PARTICIPANTS[role].role,
-    userQuestion,
-    pace,
-    budget,
-    focus,
-    destinations
-  );
+  let prompt = `请综合前面两轮的所有讨论，形成最终的共识建议。
+
+【Round 1 独立观点】：`;
+
+  const modelNames = ["model-1", "model-2", "model-3"];
+
+  modelNames.forEach((key, index) => {
+    const response = round1Responses[key];
+    if (response) {
+      prompt += `\n\n${index + 1}. ${DEBATE_MODELS[key as keyof typeof DEBATE_MODELS].role}：\n${response}`;
+    }
+  });
+
+  prompt += `\n\n【Round 2 辩论观点】：`;
+
+  modelNames.forEach((key, index) => {
+    const response = round2Responses[key];
+    if (response) {
+      prompt += `\n\n${index + 1}. ${DEBATE_MODELS[key as keyof typeof DEBATE_MODELS].role}的评论：\n${response}`;
+    }
+  });
+
+  prompt += `\n\n请提供最终的共识报告，必须包含以下部分：
+
+## ✅ 共识要点
+列出所有模型都同意的核心观点（至少3-5条）
+
+## ⚠️ 分歧说明
+说明仍然存在分歧的地方，以及如何处理这些分歧
+
+## 👉 最终建议
+提供综合各方观点的、可执行的具体建议：
+- 分步骤说明
+- 标注优先级
+- 提供注意事项
+
+请确保最终建议实用、具体且可执行。`;
+
+  return prompt;
 }
 
-/**
- * Get Round 2 prompt for a given role
- */
-export function getRound2Prompt(
-  role: keyof typeof PARTICIPANTS,
-  proposals: Record<string, string>
-): string {
-  return ROUND_2_PROMPT(PARTICIPANTS[role].role, proposals);
-}
+// ============================================================================
+// LEGACY EXPORTS (for backward compatibility during migration)
+// ============================================================================
 
-/**
- * Get Round 3 prompt (only for Planner) with dynamic duration
- * @param proposals - Round 1 proposals
- * @param critiques - Round 2 critiques
- * @param duration - Trip duration in days (defaults to 2 for backward compatibility)
- */
-export function getRound3Prompt(
-  proposals: Record<string, string>,
-  critiques: Record<string, string>,
-  duration: number = 2
-): string {
-  return ROUND_3_PROMPT(proposals, critiques, duration);
+export const PARTICIPANTS = DEBATE_MODELS;
+export function getSystemPrompt(modelKey: keyof typeof DEBATE_MODELS): string {
+  return getDebateSystemPrompt(modelKey);
+}
+export function getRound1Prompt(...args: any[]): string {
+  return getDebateRound1Prompt(args[0]);
+}
+export function getRound2Prompt(round1: Record<string, string>): string {
+  return getDebateRound2Prompt(round1);
+}
+export function getRound3Prompt(r1: Record<string, string>, r2: Record<string, string>): string {
+  return getDebateRound3Prompt(r1, r2);
 }

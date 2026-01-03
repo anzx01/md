@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { discussionMessage } from "@/db/schema/planner";
+import { debateMessage } from "@/db/schema/planner";
 import { triggerAIResponse } from "../continue/route";
 
 export async function POST(
@@ -10,35 +10,36 @@ export async function POST(
   try {
     const { sessionId } = await params;
     const body = await req.json();
-    const { message, selectedAgents } = body;
+    const { message, selectedModels } = body;
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    if (!selectedAgents || !Array.isArray(selectedAgents) || selectedAgents.length === 0) {
+    if (!selectedModels || !Array.isArray(selectedModels) || selectedModels.length === 0) {
       return NextResponse.json({ error: "At least one AI model must be selected" }, { status: 400 });
     }
 
     // Insert user message into the database
     const messageId = crypto.randomUUID();
     const [newMessage] = await db
-      .insert(discussionMessage)
+      .insert(debateMessage)
       .values({
         id: messageId,
         sessionId,
         role: "user",
-        agentId: null, // User messages don't have an agent
+        modelName: null, // User messages don't have a model
         round: null, // User messages don't belong to a round
+        isConsensus: false,
         content: message,
       })
       .returning();
 
-    console.log("User message saved, triggering AI response for:", selectedAgents);
+    console.log("User message saved, triggering AI response for:", selectedModels);
 
     // Trigger AI response in the background
     // Don't await - let it run asynchronously
-    triggerAIResponse(sessionId, messageId, selectedAgents).catch(err => {
+    triggerAIResponse(sessionId, messageId, selectedModels).catch(err => {
       console.error("Failed to trigger AI response:", err);
     });
 

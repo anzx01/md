@@ -5,20 +5,19 @@ import { ChatContainer } from "@/components/chat/ChatContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Calendar, Send, Check } from "lucide-react";
-import { ImagePanel } from "@/components/chat/ImagePanel";
 
-const agents = ["planner", "realityChecker", "budgetAdvisor"];
+const models = ["glm-4-plus", "glm-4-flash", "deepseek-chat"];
 
-const agentNames: Record<string, string> = {
-  planner: "GLM-4-Flash",
-  realityChecker: "GLM-4-Plus",
-  budgetAdvisor: "DeepSeek",
+const modelNames: Record<string, string> = {
+  "glm-4-plus": "GLM-4-Plus (深度分析)",
+  "glm-4-flash": "GLM-4-Flash (快速响应)",
+  "deepseek-chat": "DeepSeek (成本效益)",
 };
 
-const agentColors: Record<string, string> = {
-  planner: "bg-blue-500",
-  realityChecker: "bg-purple-500",
-  budgetAdvisor: "bg-green-500",
+const modelColors: Record<string, string> = {
+  "glm-4-plus": "bg-purple-500",
+  "glm-4-flash": "bg-blue-500",
+  "deepseek-chat": "bg-green-500",
 };
 
 interface HistoryViewerProps {
@@ -28,14 +27,14 @@ interface HistoryViewerProps {
 export function HistoryViewer({ sessionId }: HistoryViewerProps) {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedAgents, setSelectedAgents] = useState<string[]>(["planner", "realityChecker", "budgetAdvisor"]);
+  const [selectedModels, setSelectedModels] = useState<string[]>(["glm-4-plus", "glm-4-flash", "deepseek-chat"]);
   const [userMessage, setUserMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const response = await fetch(`/api/discuss/${sessionId}`);
+        const response = await fetch(`/api/debate/${sessionId}`);
         const data = await response.json();
         setSession(data);
       } catch (error) {
@@ -49,16 +48,16 @@ export function HistoryViewer({ sessionId }: HistoryViewerProps) {
   }, [sessionId]);
 
   const handleSendMessage = async () => {
-    if (!userMessage.trim() || isSending || selectedAgents.length === 0) return;
+    if (!userMessage.trim() || isSending || selectedModels.length === 0) return;
 
     setIsSending(true);
     try {
-      const response = await fetch(`/api/discuss/${sessionId}/message`, {
+      const response = await fetch(`/api/debate/${sessionId}/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage.trim(),
-          selectedAgents: selectedAgents
+          selectedModels: selectedModels
         }),
       });
 
@@ -99,15 +98,12 @@ export function HistoryViewer({ sessionId }: HistoryViewerProps) {
 
   if (loading) {
     return (
-      <div className="flex h-full bg-white dark:bg-slate-900 overflow-hidden">
+      <div className="flex h-full bg-white dark:bg-slate-900">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-500 border-t-transparent"></div>
             <p className="text-slate-600 dark:text-slate-400">Loading discussion...</p>
           </div>
-        </div>
-        <div className="w-[400px] flex-shrink-0 overflow-hidden">
-          <ImagePanel />
         </div>
       </div>
     );
@@ -115,19 +111,16 @@ export function HistoryViewer({ sessionId }: HistoryViewerProps) {
 
   if (!session) {
     return (
-      <div className="flex h-full bg-white dark:bg-slate-900 overflow-hidden">
+      <div className="flex h-full bg-white dark:bg-slate-900">
         <div className="flex-1 flex items-center justify-center">
           <p className="text-red-500">Failed to load discussion</p>
-        </div>
-        <div className="w-[400px] flex-shrink-0 overflow-hidden">
-          <ImagePanel />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full bg-white dark:bg-slate-900 overflow-hidden">
+    <div className="flex h-full bg-white dark:bg-slate-900">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar - Compact */}
@@ -153,27 +146,27 @@ export function HistoryViewer({ sessionId }: HistoryViewerProps) {
           </p>
         </div>
 
-        {/* Agent Selection Bar */}
+        {/* Model Selection Bar */}
         <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 px-6 py-2">
           <div className="flex items-center gap-4">
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Select AI models:</span>
-            {agents.map((agent) => {
-              const isSelected = selectedAgents.includes(agent);
+            {models.map((model) => {
+              const isSelected = selectedModels.includes(model);
 
               return (
                 <button
-                  key={agent}
+                  key={model}
                   onClick={() => {
                     if (isSelected) {
-                      setSelectedAgents(selectedAgents.filter(a => a !== agent));
+                      setSelectedModels(selectedModels.filter(m => m !== model));
                     } else {
-                      setSelectedAgents([...selectedAgents, agent]);
+                      setSelectedModels([...selectedModels, model]);
                     }
                   }}
                   className={`
                     flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all
                     ${isSelected
-                      ? `${agentColors[agent]} text-white shadow-md`
+                      ? `${modelColors[model]} text-white shadow-md`
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }
                   `}
@@ -185,7 +178,7 @@ export function HistoryViewer({ sessionId }: HistoryViewerProps) {
                       <span className="opacity-30">○</span>
                     )}
                   </span>
-                  {agentNames[agent]}
+                  {modelNames[model]}
                 </button>
               );
             })}
@@ -212,17 +205,17 @@ export function HistoryViewer({ sessionId }: HistoryViewerProps) {
             <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex gap-2">
               <Input
                 type="text"
-                placeholder={selectedAgents.length === 0
+                placeholder={selectedModels.length === 0
                   ? "Select at least one AI model above..."
                   : "Ask a follow-up question or provide feedback..."}
                 value={userMessage}
                 onChange={(e) => setUserMessage(e.target.value)}
-                disabled={isSending || selectedAgents.length === 0}
+                disabled={isSending || selectedModels.length === 0}
                 className="flex-1 h-12 text-base"
               />
               <Button
                 type="submit"
-                disabled={!userMessage.trim() || isSending || selectedAgents.length === 0}
+                disabled={!userMessage.trim() || isSending || selectedModels.length === 0}
                 size="icon"
                 className="h-12 w-12 rounded-full"
               >
@@ -236,18 +229,13 @@ export function HistoryViewer({ sessionId }: HistoryViewerProps) {
 
             {/* Info text */}
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
-              {selectedAgents.length === 0
+              {selectedModels.length === 0
                 ? "Please select at least one AI model above to send a message"
-                : `Your message will be sent to: ${selectedAgents.map(a => agentNames[a]).join(", ")}`
+                : `Your message will be sent to: ${selectedModels.map(m => modelNames[m]).join(", ")}`
               }
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Image Panel - Fixed width on the right */}
-      <div className="w-[400px] flex-shrink-0 overflow-hidden">
-        <ImagePanel key={sessionId} />
       </div>
     </div>
   );

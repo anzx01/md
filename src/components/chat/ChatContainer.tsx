@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { DiscussionMessageType } from "@/db/schema/planner";
-import { extractEntitiesWithCacheClient } from "@/lib/client-api";
 
 interface ChatContainerProps {
   sessionId: string;
@@ -19,7 +18,6 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastMessageCount = useRef(0);
   const processedMessageIds = useRef<Set<string>>(new Set());
-  const processedEntities = useRef<Set<string>>(new Set()); // Track processed entities to avoid duplicate events
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -31,26 +29,13 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
     scrollToBottom();
   }, [messages]);
 
-  // Periodically clean up processed entities to avoid memory leaks
-  useEffect(() => {
-    const cleanupInterval = setInterval(() => {
-      // Clear processed entities every 5 minutes to allow re-processing if needed
-      if (processedEntities.current.size > 0) {
-        console.log("[ChatContainer] Cleaning up processed entities, count:", processedEntities.current.size);
-        processedEntities.current.clear();
-      }
-    }, 5 * 60 * 1000); // 5 minutes
-
-    return () => clearInterval(cleanupInterval);
-  }, []);
-
   // Poll for new messages
   useEffect(() => {
     if (!sessionId) return;
 
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`/api/discuss/${sessionId}`);
+        const response = await fetch(`/api/debate/${sessionId}`);
 
         // Handle deleted session (404)
         if (response.status === 404) {
@@ -81,56 +66,13 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
 
         // Only update if there are new messages
         if (messagesWithReplies.length > lastMessageCount.current) {
-          // Process new AI messages for entity extraction
+          // Track new messages
           const newMessages = messagesWithReplies.slice(lastMessageCount.current);
 
-          // Extract entities from new AI messages and trigger image display
-          newMessages.forEach(async (msg: DiscussionMessageType & { replyTo?: any }) => {
-            // Only process AI assistant messages that haven't been processed yet
-            if (msg.role === "assistant" && !processedMessageIds.current.has(msg.id)) {
+          // Mark new messages as processed
+          newMessages.forEach((msg: DiscussionMessageType) => {
+            if (!processedMessageIds.current.has(msg.id)) {
               processedMessageIds.current.add(msg.id);
-
-              // Extract entities (attractions, food, locations, activities)
-              try {
-                console.log("[ChatContainer] Extracting entities from message:", msg.content.substring(0, 100));
-                // Pass the session question for context
-                const result = await extractEntitiesWithCacheClient(
-                  msg.content,
-                  "", // context could be previous messages if needed
-                  data.question || "" // Pass the original question
-                );
-                console.log("[ChatContainer] Extracted result:", {
-                  destinations: result.destinations.length,
-                  entities: result.entities.length
-                });
-
-                // Dispatch displayImage events for each entity
-                result.entities.forEach((entity) => {
-                  if (entity.confidence > 0.6) {
-                    // Only show high-confidence entities
-                    const entityKey = `${entity.keyword}-${entity.type}`;
-
-                    // Check if we've already processed this entity
-                    if (processedEntities.current.has(entityKey)) {
-                      console.log("[ChatContainer] Entity already processed, skipping:", entityKey);
-                      return;
-                    }
-
-                    console.log("[ChatContainer] Dispatching displayImage event:", entity);
-                    processedEntities.current.add(entityKey); // Mark as processed
-                    window.dispatchEvent(
-                      new CustomEvent('displayImage', {
-                        detail: {
-                          keyword: entity.keyword,
-                          type: entity.type
-                        }
-                      })
-                    );
-                  }
-                });
-              } catch (error) {
-                console.error("[ChatContainer] Error extracting entities:", error);
-              }
             }
           });
 
@@ -140,7 +82,7 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
 
         setLoading(false);
 
-        // Check if discussion is complete
+        // Check if debate is complete
         if (data.status === "completed" && onComplete) {
           setTimeout(() => {
             onComplete();
@@ -175,8 +117,9 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
     }, 500);
 
     // Listen for session deletion event
-    const handleSessionDeleted = (event: CustomEvent) => {
-      const deletedSessionId = event.detail?.sessionId;
+    const handleSessionDeleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const deletedSessionId = customEvent.detail?.sessionId;
       if (deletedSessionId === sessionId) {
         setSessionDeleted(true);
         setError(null);
@@ -189,13 +132,13 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
       }
     };
 
-    window.addEventListener('sessionDeleted', handleSessionDeleted as EventListener);
+    window.addEventListener('sessionDeleted', handleSessionDeleted);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-      window.removeEventListener('sessionDeleted', handleSessionDeleted as EventListener);
+      window.removeEventListener('sessionDeleted', handleSessionDeleted);
     };
   }, [sessionId, onComplete]);
 
@@ -204,7 +147,7 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Loading discussion...</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">加载中...</p>
         </div>
       </div>
     );
@@ -214,8 +157,8 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
     return (
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-8 text-center">
         <div className="text-4xl mb-4">🗑️</div>
-        <p className="text-blue-900 dark:text-blue-100 font-medium mb-2">This discussion has been deleted</p>
-        <p className="text-sm text-blue-700 dark:text-blue-300">Select another discussion or start a new one</p>
+        <p className="text-blue-900 dark:text-blue-100 font-medium mb-2">此辩论已被删除</p>
+        <p className="text-sm text-blue-700 dark:text-blue-300">请选择其他辩论或开始新辩论</p>
       </div>
     );
   }
@@ -233,7 +176,7 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
       <div className="text-center py-12">
         <div className="text-4xl mb-4">💭</div>
         <p className="text-slate-600 dark:text-slate-400">
-          Waiting for AI agents to start discussing...
+          等待AI模型开始辩论...
         </p>
       </div>
     );
@@ -251,7 +194,7 @@ export function ChatContainer({ sessionId, status, onComplete }: ChatContainerPr
         <div className="text-center py-4">
           <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-4 py-2 rounded-full">
             <span className="text-xl">✅</span>
-            <span className="font-medium">Discussion completed! Scroll up to see the final recommendation.</span>
+            <span className="font-medium">辩论完成！向上滚动查看最终建议。</span>
           </div>
         </div>
       )}

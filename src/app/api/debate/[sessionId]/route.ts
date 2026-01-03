@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { plannerSession, discussionMessage } from "@/db/schema/planner";
+import { debateSession, debateMessage } from "@/db/schema/planner";
 import { eq, asc } from "drizzle-orm";
 
 export async function GET(
@@ -8,14 +8,14 @@ export async function GET(
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    console.log("=== GET /api/discuss/[sessionId] called ===");
+    console.log("=== GET /api/debate/[sessionId] called ===");
     const { sessionId } = await params;
     console.log("Fetching session:", sessionId);
 
     const session = await db
       .select()
-      .from(plannerSession)
-      .where(eq(plannerSession.id, sessionId))
+      .from(debateSession)
+      .where(eq(debateSession.id, sessionId))
       .limit(1);
 
     console.log("Session query result:", session.length, "rows");
@@ -29,27 +29,26 @@ export async function GET(
     // Fetch messages in chronological order
     const messages = await db
       .select()
-      .from(discussionMessage)
-      .where(eq(discussionMessage.sessionId, sessionId))
-      .orderBy(asc(discussionMessage.createdAt));
+      .from(debateMessage)
+      .where(eq(debateMessage.sessionId, sessionId))
+      .orderBy(asc(debateMessage.createdAt));
 
     console.log("Messages query result:", messages.length, "rows");
 
     const responseData = {
       sessionId: session[0].id,
       status: session[0].status,
-      question: session[0].question,
-      pace: session[0].pace,
-      budget: session[0].budget,
-      focus: session[0].focus,
+      question: session[0].userQuestion,
+      title: session[0].title,
       messages: messages,
-      // Legacy fields for backward compatibility
+      // Debate results
+      finalConsensus: session[0].finalConsensus,
+      remainingDisagreements: session[0].remainingDisagreements,
+      modelUsed: session[0].modelUsed,
+      // Round results (for debugging)
       round1Proposals: session[0].round1Proposals,
       round2Critiques: session[0].round2Critiques,
       round3Consensus: session[0].round3Consensus,
-      recommendation: session[0].recommendation,
-      agreements: session[0].agreements,
-      disagreements: session[0].disagreements,
     };
 
     console.log("Returning response with status:", session[0].status);

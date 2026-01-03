@@ -1,40 +1,40 @@
 import { DiscussionMessageType } from "@/db/schema/planner";
 
-// Model configuration with actual model names and icons
+// Model configuration with new debate model names
 const MODEL_CONFIG: Record<
   string,
   { name: string; shortName: string; color: string; bgColor: string; avatar: string; provider: string }
 > = {
-  planner: {
-    name: "智谱 GLM-4-Flash",
-    shortName: "GLM-4-Flash",
+  "glm-4-plus": {
+    name: "深度分析专家",
+    shortName: "深度分析专家",
     color: "text-blue-600 dark:text-blue-400",
     bgColor: "bg-blue-500",
-    avatar: "🧠",
-    provider: "智谱AI",
+    avatar: "🎯",
+    provider: "GLM-4-Plus",
   },
-  realityChecker: {
-    name: "智谱 GLM-4-Plus",
-    shortName: "GLM-4-Plus",
+  "glm-4-flash": {
+    name: "快速响应专家",
+    shortName: "快速响应专家",
     color: "text-purple-600 dark:text-purple-400",
     bgColor: "bg-purple-500",
-    avatar: "🔍",
-    provider: "智谱AI",
+    avatar: "⚡",
+    provider: "GLM-4-Flash",
   },
-  budgetAdvisor: {
-    name: "DeepSeek Chat",
-    shortName: "DeepSeek",
+  "deepseek-chat": {
+    name: "成本效益分析师",
+    shortName: "成本效益分析师",
     color: "text-green-600 dark:text-green-400",
     bgColor: "bg-green-500",
     avatar: "💰",
-    provider: "深度求索",
+    provider: "DeepSeek",
   },
 };
 
 interface ChatMessageProps {
   message: DiscussionMessageType & {
     replyTo?: {
-      agentId: string;
+      modelName: string;
       content: string;
     };
   };
@@ -86,8 +86,8 @@ export function ChatMessage({ message, showAvatar = true }: ChatMessageProps) {
     );
   }
 
-  // AI message - current style (left-aligned with avatar)
-  const config = MODEL_CONFIG[message.agentId || "planner"] || MODEL_CONFIG.planner;
+  // AI message - left-aligned with avatar
+  const config = MODEL_CONFIG[message.modelName || "glm-4-plus"] || MODEL_CONFIG["glm-4-plus"];
 
   return (
     <div className="flex gap-3 mb-4 animate-fadeIn">
@@ -110,7 +110,7 @@ export function ChatMessage({ message, showAvatar = true }: ChatMessageProps) {
         {message.replyToId && message.replyTo && (
           <div className="mb-2 pl-3 border-l-2 border-slate-300 dark:border-slate-600">
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-              📌 回复 {message.replyTo.agentId === "user" ? "你" : MODEL_CONFIG[message.replyTo.agentId]?.shortName}:
+              📌 回复 {message.replyTo.modelName === "user" ? "你" : MODEL_CONFIG[message.replyTo.modelName]?.shortName}:
             </div>
             <div className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
               {message.replyTo.content}
@@ -122,9 +122,9 @@ export function ChatMessage({ message, showAvatar = true }: ChatMessageProps) {
         <div className="inline-block max-w-full">
           <div
             className={`px-4 py-2 rounded-2xl ${
-              message.agentId === "planner"
+              message.modelName === "glm-4-plus"
                 ? "bg-blue-100 dark:bg-blue-900/30 text-slate-900 dark:text-slate-100"
-                : message.agentId === "realityChecker"
+                : message.modelName === "glm-4-flash"
                 ? "bg-purple-100 dark:bg-purple-900/30 text-slate-900 dark:text-slate-100"
                 : "bg-green-100 dark:bg-green-900/30 text-slate-900 dark:text-slate-100"
             }`}

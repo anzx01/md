@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { plannerSession, discussionMessage } from "@/db/schema/planner";
+import { debateSession, debateMessage } from "@/db/schema/planner";
 import { desc, count, eq } from "drizzle-orm";
-import { extractTitle, formatRelativeTime } from "@/lib/title-extractor";
 
 /**
  * GET /api/sessions
  *
- * Fetch all discussion sessions with titles and metadata
+ * Fetch all debate sessions with titles and metadata
  */
 export async function GET(req: NextRequest) {
   try {
@@ -16,40 +15,59 @@ export async function GET(req: NextRequest) {
     // Fetch all sessions with message counts
     const sessions = await db
       .select({
-        id: plannerSession.id,
-        question: plannerSession.question,
-        title: plannerSession.title,
-        status: plannerSession.status,
-        pace: plannerSession.pace,
-        budget: plannerSession.budget,
-        focus: plannerSession.focus,
-        isPinned: plannerSession.isPinned,
-        createdAt: plannerSession.createdAt,
-        updatedAt: plannerSession.updatedAt,
-        messageCount: count(discussionMessage.id),
+        id: debateSession.id,
+        userQuestion: debateSession.userQuestion,
+        title: debateSession.title,
+        status: debateSession.status,
+        isPinned: debateSession.isPinned,
+        createdAt: debateSession.createdAt,
+        updatedAt: debateSession.updatedAt,
+        messageCount: count(debateMessage.id),
       })
-      .from(plannerSession)
-      .leftJoin(discussionMessage, eq(plannerSession.id, discussionMessage.sessionId))
-      .groupBy(plannerSession.id)
-      .orderBy(desc(plannerSession.isPinned), desc(plannerSession.createdAt));
+      .from(debateSession)
+      .leftJoin(debateMessage, eq(debateSession.id, debateMessage.sessionId))
+      .groupBy(debateSession.id)
+      .orderBy(desc(debateSession.isPinned), desc(debateSession.createdAt));
 
     console.log(`Found ${sessions.length} sessions`);
 
     // Transform sessions to add formatted times
-    const transformedSessions = sessions.map((session) => ({
-      id: session.id,
-      question: session.question,
-      title: session.title || extractTitle(session.question), // Fallback to extractTitle if title is null
-      status: session.status,
-      pace: session.pace,
-      budget: session.budget,
-      focus: session.focus,
-      isPinned: session.isPinned,
-      createdAt: session.createdAt,
-      updatedAt: session.updatedAt,
-      relativeTime: formatRelativeTime(session.createdAt),
-      messageCount: session.messageCount || 0,
-    }));
+    const transformedSessions = sessions.map((session) => {
+      // Format relative time
+      const now = new Date();
+      const created = new Date(session.createdAt);
+      const diffMs = now.getTime() - created.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      let relativeTime: string;
+      if (diffMins < 1) {
+        relativeTime = "刚刚";
+      } else if (diffMins < 60) {
+        relativeTime = `${diffMins}分钟前`;
+      } else if (diffHours < 24) {
+        relativeTime = `${diffHours}小时前`;
+      } else if (diffDays === 1) {
+        relativeTime = "昨天";
+      } else if (diffDays < 7) {
+        relativeTime = `${diffDays}天前`;
+      } else {
+        relativeTime = created.toLocaleDateString("zh-CN");
+      }
+
+      return {
+        id: session.id,
+        question: session.userQuestion,
+        title: session.title || session.userQuestion.slice(0, 50),
+        status: session.status,
+        isPinned: session.isPinned,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+        relativeTime,
+        messageCount: session.messageCount || 0,
+      };
+    });
 
     return NextResponse.json({
       sessions: transformedSessions,

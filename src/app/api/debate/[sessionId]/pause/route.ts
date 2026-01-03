@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { plannerSession } from "@/db/schema/planner";
+import { debateSession } from "@/db/schema/planner";
 import { eq } from "drizzle-orm";
 
 /**
- * POST /api/discuss/[sessionId]/pause
+ * POST /api/debate/[sessionId]/pause
  *
- * Toggle pause/resume state for a discussion session
+ * Toggle pause/resume state for a debate session
  */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    console.log("=== POST /api/discuss/[sessionId]/pause called ===");
+    console.log("=== POST /api/debate/[sessionId]/pause called ===");
     const { sessionId } = await params;
 
     const body = await req.json();
@@ -24,8 +24,8 @@ export async function POST(
     // Get current session
     const sessions = await db
       .select()
-      .from(plannerSession)
-      .where(eq(plannerSession.id, sessionId))
+      .from(debateSession)
+      .where(eq(debateSession.id, sessionId))
       .limit(1);
 
     if (sessions.length === 0) {
@@ -38,9 +38,9 @@ export async function POST(
     const newPausedState = action === "pause";
 
     await db
-      .update(plannerSession)
+      .update(debateSession)
       .set({ isPaused: newPausedState })
-      .where(eq(plannerSession.id, sessionId));
+      .where(eq(debateSession.id, sessionId));
 
     console.log(
       `Session ${sessionId} ${newPausedState ? "paused" : "resumed"}`
@@ -64,7 +64,7 @@ export async function POST(
 }
 
 /**
- * GET /api/discuss/[sessionId]/pause
+ * GET /api/debate/[sessionId]/pause
  *
  * Get current pause state
  */
@@ -76,9 +76,9 @@ export async function GET(
     const { sessionId } = await params;
 
     const sessions = await db
-      .select({ isPaused: plannerSession.isPaused })
-      .from(plannerSession)
-      .where(eq(plannerSession.id, sessionId))
+      .select({ isPaused: debateSession.isPaused })
+      .from(debateSession)
+      .where(eq(debateSession.id, sessionId))
       .limit(1);
 
     if (sessions.length === 0) {

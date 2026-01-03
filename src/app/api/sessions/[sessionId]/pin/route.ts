@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { plannerSession } from "@/db/schema/planner";
+import { debateSession } from "@/db/schema/planner";
 import { eq } from "drizzle-orm";
 
 // POST /api/sessions/[sessionId]/pin - Toggle pin status
@@ -14,8 +14,8 @@ export async function POST(
     // Get current pin status
     const session = await db
       .select()
-      .from(plannerSession)
-      .where(eq(plannerSession.id, sessionId))
+      .from(debateSession)
+      .where(eq(debateSession.id, sessionId))
       .limit(1);
 
     if (session.length === 0) {
@@ -24,9 +24,9 @@ export async function POST(
 
     // Toggle pin status
     await db
-      .update(plannerSession)
+      .update(debateSession)
       .set({ isPinned: !session[0].isPinned })
-      .where(eq(plannerSession.id, sessionId));
+      .where(eq(debateSession.id, sessionId));
 
     return NextResponse.json({ success: true, isPinned: !session[0].isPinned });
   } catch (error) {

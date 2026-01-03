@@ -31,11 +31,11 @@ export function AppLayout({
 
     // Fetch session to determine view mode
     try {
-      const response = await fetch(`/api/discuss/${sessionId}`);
+      const response = await fetch(`/api/debate/${sessionId}`);
       const data = await response.json();
       console.log("[AppLayout] Session data:", data);
 
-      if (data.status === "processing") {
+      if (data.status === "debating" || data.status === "processing") {
         console.log("[AppLayout] Setting viewMode to 'progress'");
         setViewMode("progress");
       } else {

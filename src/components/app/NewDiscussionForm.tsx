@@ -3,60 +3,51 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ChevronDown, Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, MessageSquare } from "lucide-react";
 
 interface NewDiscussionFormProps {
   onDiscussionStarted: (sessionId: string) => void;
 }
 
+const exampleQuestions = [
+  "如何平衡工作和生活?",
+  "学习编程的最佳路径是什么?",
+  "如何提高团队协作效率?",
+  "远程工作的优缺点有哪些?",
+];
+
 export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProps) {
   const [question, setQuestion] = useState("");
-  const [pace, setPace] = useState("balanced");
-  const [budget, setBudget] = useState("flexible");
-  const [focus, setFocus] = useState("experience-first");
   const [isLoading, setIsLoading] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with question:", question);
 
     if (!question.trim()) {
-      console.log("Question is empty, not submitting");
       return;
     }
 
     setIsLoading(true);
-    console.log("Starting API request to /api/discuss");
 
     try {
-      const response = await fetch("/api/discuss", {
+      const response = await fetch("/api/debate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: question.trim(),
-          pace,
-          budget,
-          focus,
         }),
       });
 
-      console.log("API response status:", response.status);
-
       const data = await response.json();
-      console.log("API response data:", data);
 
       if (!response.ok) {
-        throw new Error(data.details || data.error || "Failed to start discussion");
+        throw new Error(data.details || data.error || "Failed to start debate");
       }
 
-      console.log("Discussion started with session ID:", data.sessionId);
       onDiscussionStarted(data.sessionId);
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to start discussion. Please try again.");
+      alert("Failed to start debate. Please try again.");
       setIsLoading(false);
     }
   };
@@ -69,23 +60,23 @@ export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProp
           {/* Hero Text */}
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <Sparkles className="h-8 w-8 text-blue-600" />
+              <MessageSquare className="h-8 w-8 text-blue-600" />
               <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-50">
-                Start a New Discussion
+                三模型辩论共识系统
               </h1>
             </div>
             <p className="text-xl text-slate-600 dark:text-slate-400">
-              Ask a question and let multiple AI agents collaborate on the answer
+              提出任何问题，让三个AI模型从不同角度辩论，为您提供最佳建议
             </p>
           </div>
 
           {/* Input Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Main Input */}
             <div className="relative flex items-center">
               <Input
                 type="text"
-                placeholder="What would you like to discuss? (e.g., Plan a 2-day trip to Paris)"
+                placeholder="请输入您的问题..."
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => {
@@ -100,8 +91,6 @@ export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProp
               <Button
                 type="button"
                 onClick={(e) => {
-                  console.log("Button clicked! Question:", question);
-                  console.log("Button disabled:", !question.trim() || isLoading);
                   e.preventDefault();
                   handleSubmit(e as any);
                 }}
@@ -117,103 +106,42 @@ export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProp
               </Button>
             </div>
 
-            {/* Options Toggle */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowOptions(!showOptions)}
-                className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors"
-              >
-                <span>Advanced Options</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${showOptions ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Collapsible Options */}
-              {showOptions && (
-                <div className="mt-4 space-y-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                  {/* Pace */}
-                  <div>
-                    <Label className="mb-2 block text-sm font-semibold">Pace</Label>
-                    <RadioGroup value={pace} onValueChange={setPace} disabled={isLoading}>
-                      <div className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="fast" id="pace-fast" />
-                          <Label htmlFor="pace-fast" className="cursor-pointer font-normal text-sm">
-                            Fast
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="balanced" id="pace-balanced" />
-                          <Label htmlFor="pace-balanced" className="cursor-pointer font-normal text-sm">
-                            Balanced
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="relaxed" id="pace-relaxed" />
-                          <Label htmlFor="pace-relaxed" className="cursor-pointer font-normal text-sm">
-                            Relaxed
-                          </Label>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  {/* Budget */}
-                  <div>
-                    <Label className="mb-2 block text-sm font-semibold">Budget</Label>
-                    <RadioGroup value={budget} onValueChange={setBudget} disabled={isLoading}>
-                      <div className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="budget-conscious" id="budget-conscious" />
-                          <Label htmlFor="budget-conscious" className="cursor-pointer font-normal text-sm">
-                            Budget-conscious
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="flexible" id="budget-flexible" />
-                          <Label htmlFor="budget-flexible" className="cursor-pointer font-normal text-sm">
-                            Flexible
-                          </Label>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  {/* Focus */}
-                  <div>
-                    <Label className="mb-2 block text-sm font-semibold">Focus</Label>
-                    <RadioGroup value={focus} onValueChange={setFocus} disabled={isLoading}>
-                      <div className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="experience-first" id="focus-experience" />
-                          <Label htmlFor="focus-experience" className="cursor-pointer font-normal text-sm">
-                            Experience-first
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="practical" id="focus-practical" />
-                          <Label htmlFor="focus-practical" className="cursor-pointer font-normal text-sm">
-                            Practical
-                          </Label>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </div>
-              )}
+            {/* Example Questions */}
+            <div className="space-y-2">
+              <p className="text-sm text-slate-500 dark:text-slate-400">试试这些问题：</p>
+              <div className="flex flex-wrap gap-2">
+                {exampleQuestions.map((example, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setQuestion(example)}
+                    disabled={isLoading}
+                    className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md transition-colors disabled:opacity-50"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
             </div>
           </form>
 
           {/* Info Text */}
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-            Multiple AI agents will collaborate to provide comprehensive answers
-          </p>
+          <div className="text-center space-y-2">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              三个AI模型将进行三轮辩论，达成共识后提供综合建议
+            </p>
+            <div className="flex items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-500">
+              <span>🎯 深度分析专家</span>
+              <span>⚡ 快速响应专家</span>
+              <span>💰 成本效益分析师</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Bottom Bar - Empty for consistency with ActiveDiscussion */}
+      {/* Bottom Bar */}
       <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 h-20">
-        {/* This space is reserved for future features or to maintain consistent layout */}
+        {/* Reserved for future features */}
       </div>
     </div>
   );

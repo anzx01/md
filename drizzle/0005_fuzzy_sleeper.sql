@@ -1,1 +1,0 @@
-ALTER TABLE "planner_session" ADD COLUMN "duration" integer;
