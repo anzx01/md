@@ -6,24 +6,24 @@ const MODEL_CONFIG: Record<
   { name: string; shortName: string; color: string; bgColor: string; avatar: string; provider: string }
 > = {
   "glm-4-plus": {
-    name: "深度分析专家",
-    shortName: "深度分析专家",
+    name: "GLM-4-plus",
+    shortName: "GLM-4-plus",
     color: "text-blue-600 dark:text-blue-400",
     bgColor: "bg-blue-500",
     avatar: "🎯",
-    provider: "GLM-4-Plus",
+    provider: "智谱AI",
   },
   "glm-4-flash": {
-    name: "快速响应专家",
-    shortName: "快速响应专家",
+    name: "GLM-4-flash",
+    shortName: "GLM-4-flash",
     color: "text-purple-600 dark:text-purple-400",
     bgColor: "bg-purple-500",
     avatar: "⚡",
-    provider: "GLM-4-Flash",
+    provider: "智谱AI",
   },
   "deepseek-chat": {
-    name: "成本效益分析师",
-    shortName: "成本效益分析师",
+    name: "DeepSeek-chat",
+    shortName: "DeepSeek-chat",
     color: "text-green-600 dark:text-green-400",
     bgColor: "bg-green-500",
     avatar: "💰",

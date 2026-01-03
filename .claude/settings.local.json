@@ -34,7 +34,8 @@
       "Bash(npx tsx:*)",
       "Bash(npm run db:apply:*)",
       "Bash(set DIRECT_URL=postgresql://postgres:liuzx5112liuzx551@db.cwwbwksrebyaydjadstt.supabase.co:5432/postgres:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

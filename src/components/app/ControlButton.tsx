@@ -1,11 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowRight, Pause, Play, Plus } from "lucide-react";
+import { Loader2, ArrowRight, Pause, Play, Plus, Check } from "lucide-react";
 
 interface ControlButtonProps {
-  status: "idle" | "processing" | "completed";
-  isPaused: boolean;
+  status: "idle" | "processing" | "completed" | "waiting" | "thinking" | "writing" | "done";
+  isPaused?: boolean;
   isLoading?: boolean;
   onSubmit?: () => void;
   onPause?: () => void;
@@ -22,6 +22,24 @@ export function ControlButton({
   onResume,
   onNew,
 }: ControlButtonProps) {
+  // Model status indicators
+  if (status === "waiting") {
+    return (
+      <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+    );
+  }
+
+  if (status === "thinking") {
+    return (
+      <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+    );
+  }
+
+  if (status === "done") {
+    return <Check className="h-4 w-4 text-green-500" />;
+  }
+
+  // Legacy control buttons
   // 未开始状态 - 显示箭头按钮
   if (status === "idle") {
     return (

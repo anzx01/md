@@ -5,20 +5,33 @@ import { ChatContainer } from "@/components/chat/ChatContainer";
 import { ControlButton } from "./ControlButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Send, Pause, Play, Check } from "lucide-react";
 
 const models = ["glm-4-plus", "glm-4-flash", "deepseek-chat"];
 
 const modelNames: Record<string, string> = {
-  "glm-4-plus": "深度分析专家",
-  "glm-4-flash": "快速响应专家",
-  "deepseek-chat": "成本效益分析师",
+  "glm-4-plus": "GLM-4-plus",
+  "glm-4-flash": "GLM-4-flash",
+  "deepseek-chat": "DeepSeek-chat",
 };
 
 const modelColors: Record<string, string> = {
   "glm-4-plus": "bg-blue-500",
   "glm-4-flash": "bg-purple-500",
   "deepseek-chat": "bg-green-500",
+};
+
+const modelIcons: Record<string, string> = {
+  "glm-4-plus": "🎯",
+  "glm-4-flash": "⚡",
+  "deepseek-chat": "💰",
+};
+
+const modelProviders: Record<string, string> = {
+  "glm-4-plus": "智谱AI",
+  "glm-4-flash": "智谱AI",
+  "deepseek-chat": "DeepSeek",
 };
 
 type ModelStatus = "waiting" | "thinking" | "writing" | "done";
@@ -124,7 +137,9 @@ export function ActiveDiscussion({ sessionId, onCompleted }: ActiveDiscussionPro
 
     let shouldStopPolling = false;
     fetchSession().then(stop => {
-      shouldStopPolling = stop;
+      if (stop !== undefined) {
+        shouldStopPolling = stop;
+      }
     });
 
     const interval = setInterval(async () => {
@@ -217,10 +232,10 @@ export function ActiveDiscussion({ sessionId, onCompleted }: ActiveDiscussionPro
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900">
-      {/* Top Bar - Model Status */}
+      {/* Top Bar - Model Status and Selection */}
       <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="px-6 py-4 space-y-3">
+          <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               {isPaused ? "已暂停" : isCompleted ? "辩论完成" : "辩论中..."}
             </h2>
@@ -261,16 +276,36 @@ export function ActiveDiscussion({ sessionId, onCompleted }: ActiveDiscussionPro
             </div>
           </div>
 
-          {/* Model Status Indicators */}
-          <div className="flex gap-4">
+          {/* Model Selection and Status Indicators */}
+          <div className="flex flex-wrap gap-2">
             {models.map((model) => (
-              <div key={model} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${modelColors[model]}`} />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label
+                key={model}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm ${
+                  selectedModels.includes(model)
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+                }`}
+              >
+                <Checkbox
+                  checked={selectedModels.includes(model)}
+                  onCheckedChange={() => {
+                    setSelectedModels((prev) =>
+                      prev.includes(model)
+                        ? prev.filter((id) => id !== model)
+                        : [...prev, model]
+                    );
+                  }}
+                  disabled={isSending || isPaused}
+                  className="pointer-events-none"
+                />
+                <div className={`w-2 h-2 rounded-full ${modelColors[model]}`} />
+                <span className="font-medium text-slate-700 dark:text-slate-300">
                   {modelNames[model]}
                 </span>
+                <span className="text-xs text-slate-500">{modelProviders[model]}</span>
                 <ControlButton status={modelStates[model]} />
-              </div>
+              </label>
             ))}
           </div>
         </div>
@@ -287,6 +322,7 @@ export function ActiveDiscussion({ sessionId, onCompleted }: ActiveDiscussionPro
 
       {/* Bottom Bar - User Input */}
       <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 p-4">
+        {/* Message Input */}
         <div className="flex gap-2">
           <Input
             value={userMessage}
@@ -302,7 +338,7 @@ export function ActiveDiscussion({ sessionId, onCompleted }: ActiveDiscussionPro
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!userMessage.trim() || isSending || isPaused}
+            disabled={!userMessage.trim() || isSending || isPaused || selectedModels.length === 0}
             size="icon"
           >
             {isSending ? (

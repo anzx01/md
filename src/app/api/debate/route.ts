@@ -20,6 +20,7 @@ import { eq } from "drizzle-orm";
 
 interface DebateRequest {
   question: string;
+  selectedModels?: string[];
 }
 
 interface DebateResult {
@@ -131,9 +132,10 @@ async function callLLM(
  */
 async function runDebate(
   question: string,
-  sessionId: string
+  sessionId: string,
+  selectedModels: string[]
 ): Promise<DebateResult> {
-  console.log(`[runDebate] Starting debate for question: ${question}`);
+  console.log(`[runDebate] Starting debate for question: ${question} with models:`, selectedModels);
 
   if (apiConfig.useMockApi) {
     console.log("[runDebate] Using Mock API mode");
@@ -213,13 +215,16 @@ async function runDebate(
 
   // Round 1: Independent proposals
   console.log("Starting Round 1: Independent proposals...");
-  for (const [modelKey, config] of Object.entries(DEBATE_MODELS)) {
-    console.log(`Round 1: ${modelKey} proposing...`);
-    const systemPrompt = getDebateSystemPrompt(modelKey as any);
+  for (const modelId of selectedModels) {
+    const config = DEBATE_MODELS[`model-${selectedModels.indexOf(modelId) + 1}` as keyof typeof DEBATE_MODELS];
+    if (!config) continue;
+
+    console.log(`Round 1: ${modelId} proposing...`);
+    const systemPrompt = getDebateSystemPrompt(`model-${selectedModels.indexOf(modelId) + 1}` as any);
     const userPrompt = getDebateRound1Prompt(question);
 
-    result.round1[modelKey] = await callLLM(
-      config.model,
+    result.round1[modelId] = await callLLM(
+      modelId,
       systemPrompt,
       userPrompt,
       config.provider,
@@ -228,26 +233,29 @@ async function runDebate(
 
     // Save to database
     const messageId = crypto.randomUUID();
-    round1MessageIds[modelKey] = messageId;
+    round1MessageIds[modelId] = messageId;
     await db.insert(debateMessage).values({
       id: messageId,
       sessionId,
-      modelName: config.model,
+      modelName: modelId,
       round: 1,
-      content: result.round1[modelKey],
+      content: result.round1[modelId],
       isConsensus: false,
     });
   }
 
   // Round 2: Critiques and counter-arguments
   console.log("Starting Round 2: Critiques...");
-  for (const [modelKey, config] of Object.entries(DEBATE_MODELS)) {
-    console.log(`Round 2: ${modelKey} critiquing...`);
-    const systemPrompt = getDebateSystemPrompt(modelKey as any);
+  for (const modelId of selectedModels) {
+    const config = DEBATE_MODELS[`model-${selectedModels.indexOf(modelId) + 1}` as keyof typeof DEBATE_MODELS];
+    if (!config) continue;
+
+    console.log(`Round 2: ${modelId} critiquing...`);
+    const systemPrompt = getDebateSystemPrompt(`model-${selectedModels.indexOf(modelId) + 1}` as any);
     const userPrompt = getDebateRound2Prompt(result.round1);
 
-    result.round2[modelKey] = await callLLM(
-      config.model,
+    result.round2[modelId] = await callLLM(
+      modelId,
       systemPrompt,
       userPrompt,
       config.provider,
@@ -258,25 +266,27 @@ async function runDebate(
     await db.insert(debateMessage).values({
       id: crypto.randomUUID(),
       sessionId,
-      modelName: config.model,
+      modelName: modelId,
       round: 2,
-      content: result.round2[modelKey],
-      replyToId: round1MessageIds[modelKey],
+      content: result.round2[modelId],
+      replyToId: round1MessageIds[modelId],
       isConsensus: false,
     });
   }
 
   // Round 3: Consensus formation
   console.log("Starting Round 3: Consensus formation...");
-  const consensusModel = DEBATE_MODELS.synthesizer;
-  const systemPrompt = getDebateSystemPrompt("synthesizer");
+  // Use the first selected model for consensus
+  const consensusModelId = selectedModels[0];
+  const consensusConfig = DEBATE_MODELS["model-1"]; // Use model-1 config for consensus
+  const systemPrompt = getDebateSystemPrompt("model-1" as any);
   const userPrompt = getDebateRound3Prompt(result.round1, result.round2);
 
   const finalRecommendation = await callLLM(
-    consensusModel.model,
+    consensusModelId,
     systemPrompt,
     userPrompt,
-    consensusModel.provider,
+    consensusConfig.provider,
     1500
   );
 
@@ -284,7 +294,7 @@ async function runDebate(
   await db.insert(debateMessage).values({
     id: crypto.randomUUID(),
     sessionId,
-    modelName: consensusModel.model,
+    modelName: consensusModelId,
     round: 3,
     content: finalRecommendation,
     isConsensus: true,
@@ -319,7 +329,7 @@ async function runDebate(
 export async function POST(req: NextRequest) {
   try {
     const body: DebateRequest = await req.json();
-    const { question } = body;
+    const { question, selectedModels = ["glm-4-plus", "glm-4-flash", "deepseek-chat"] } = body;
 
     if (!question || question.trim().length === 0) {
       return NextResponse.json({ error: "Question is required" }, { status: 400 });
@@ -336,12 +346,13 @@ export async function POST(req: NextRequest) {
       userQuestion: question,
       title,
       status: "debating",
+      modelUsed: selectedModels,
     });
 
     console.log(`[POST /api/debate] Created session ${sessionId} for question: ${question}`);
 
     // Start debate asynchronously
-    runDebate(question, sessionId).catch((error) => {
+    runDebate(question, sessionId, selectedModels).catch((error) => {
       console.error(`[POST /api/debate] Debate failed for session ${sessionId}:`, error);
       db.update(debateSession)
         .set({ status: "failed" })

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Sparkles, MessageSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface NewDiscussionFormProps {
   onDiscussionStarted: (sessionId: string) => void;
@@ -16,14 +17,26 @@ const exampleQuestions = [
   "远程工作的优缺点有哪些?",
 ];
 
+const models = [
+  { id: "glm-4-plus", name: "GLM-4-plus", icon: "🎯", provider: "智谱AI" },
+  { id: "glm-4-flash", name: "GLM-4-flash", icon: "⚡", provider: "智谱AI" },
+  { id: "deepseek-chat", name: "DeepSeek-chat", icon: "💰", provider: "DeepSeek" },
+];
+
 export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProps) {
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModels, setSelectedModels] = useState<string[]>(["glm-4-plus", "glm-4-flash", "deepseek-chat"]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!question.trim()) {
+      return;
+    }
+
+    if (selectedModels.length === 0) {
+      alert("请至少选择一个模型");
       return;
     }
 
@@ -35,6 +48,7 @@ export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: question.trim(),
+          selectedModels,
         }),
       });
 
@@ -50,6 +64,14 @@ export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProp
       alert("Failed to start debate. Please try again.");
       setIsLoading(false);
     }
+  };
+
+  const handleModelToggle = (modelId: string) => {
+    setSelectedModels((prev) =>
+      prev.includes(modelId)
+        ? prev.filter((id) => id !== modelId)
+        : [...prev, modelId]
+    );
   };
 
   return (
@@ -106,6 +128,46 @@ export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProp
               </Button>
             </div>
 
+            {/* Model Selection */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                选择参与辩论的模型：
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {models.map((model) => (
+                  <label
+                    key={model.id}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedModels.includes(model.id)
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={selectedModels.includes(model.id)}
+                      onCheckedChange={() => handleModelToggle(model.id)}
+                      disabled={isLoading}
+                      className="pointer-events-none"
+                    />
+                    <span className="text-2xl">{model.icon}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                        {model.name}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {model.provider}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {selectedModels.length === 0 && (
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  请至少选择一个模型
+                </p>
+              )}
+            </div>
+
             {/* Example Questions */}
             <div className="space-y-2">
               <p className="text-sm text-slate-500 dark:text-slate-400">试试这些问题：</p>
@@ -131,9 +193,9 @@ export function NewDiscussionForm({ onDiscussionStarted }: NewDiscussionFormProp
               三个AI模型将进行三轮辩论，达成共识后提供综合建议
             </p>
             <div className="flex items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-500">
-              <span>🎯 深度分析专家</span>
-              <span>⚡ 快速响应专家</span>
-              <span>💰 成本效益分析师</span>
+              <span>🎯 GLM-4-plus</span>
+              <span>⚡ GLM-4-flash</span>
+              <span>💰 DeepSeek-chat</span>
             </div>
           </div>
         </div>
