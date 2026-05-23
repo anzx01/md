@@ -49,7 +49,7 @@
 ## 项目结构
 
 ```
-md/
+ai-debate-consensus/
 ├── src/
 │   ├── app/
 │   │   ├── api/

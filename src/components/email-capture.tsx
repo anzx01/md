@@ -47,14 +47,13 @@ export default function EmailCapture({ sessionId }: EmailCaptureProps) {
         throw new Error("Failed to capture email");
       }
 
-      // Track email collected event
+      // Track email collected event (no PII in analytics metadata)
       await fetch("/api/analytics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           eventType: "email_collected",
           sessionId,
-          metadata: { email: email.trim() },
         }),
       });
 
