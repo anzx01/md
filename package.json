@@ -1,12 +1,16 @@
 {
   "name": "nextjs-15",
   "version": "0.1.0",
+  "description": "AI debate consensus system built with Next.js.",
+  "license": "MIT",
+  "author": "Jabir Developer",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "audit:licenses": "pnpm licenses list --prod",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",

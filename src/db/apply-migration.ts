@@ -2,8 +2,38 @@ import postgres from "postgres";
 import fs from "fs";
 import path from "path";
 
-// Use direct URL for migrations (as defined in .env)
-const sql = postgres("postgresql://postgres:liuzx5112liuzx551@db.cwwbwksrebyaydjadstt.supabase.co:5432/postgres");
+function loadLocalEnv() {
+  const envPath = path.join(process.cwd(), ".env");
+
+  if (!fs.existsSync(envPath)) {
+    return;
+  }
+
+  for (const line of fs.readFileSync(envPath, "utf-8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (!match || process.env[match[1]]) {
+      continue;
+    }
+
+    process.env[match[1]] = match[2].trim().replace(/^(['"])(.*)\1$/, "$2");
+  }
+}
+
+loadLocalEnv();
+
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("Set DIRECT_URL or DATABASE_URL before running the migration.");
+}
+
+const sql = postgres(connectionString, { max: 1 });
 
 async function applyMigration() {
   try {

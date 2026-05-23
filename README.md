@@ -155,19 +155,12 @@ pnpm install
 ```
 
 ### 3. 配置环境变量
-创建 `.env` 文件：
-```env
-# 数据库连接
-DATABASE_URL="postgresql://user:password@host:5432/dbname"
-
-# AI API 密钥
-ZHIPU_API_KEY="your-zhipu-api-key"
-DEEPSEEK_API_KEY="your-deepseek-api-key"
-
-# Better Auth
-BETTER_AUTH_SECRET="your-auth-secret"
-BETTER_AUTH_URL="http://localhost:3000"
+复制环境变量模板并填入你自己的密钥：
+```bash
+cp .env.example .env
 ```
+
+不要提交 `.env`、真实数据库连接串、API 密钥或本机工具配置。
 
 ### 4. 数据库迁移
 ```bash
@@ -370,7 +363,9 @@ A: 检查 `DATABASE_URL` 是否正确，或使用 `pnpm run db:studio` 查看数
 
 ## 许可证
 
-本项目采用 MIT 许可证。
+本项目采用 MIT 许可证，详见 [LICENSE](LICENSE)。
+
+第三方依赖和字体资源的许可证说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。提交到公开仓库前，请确认没有真实密钥进入 Git 历史；如曾提交过密钥，应先轮换密钥再清理历史。
 
 ## 联系方式
 
@@ -378,4 +373,4 @@ A: 检查 `DATABASE_URL` 是否正确，或使用 `pnpm run db:studio` 查看数
 
 ---
 
-**注意**：本项目为演示项目，请勿在生产环境中直接使用硬编码的数据库连接字符串等敏感信息。
+**注意**：本项目为演示项目，生产环境部署前请完成安全、隐私和成本控制评估。
