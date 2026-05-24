@@ -2,9 +2,12 @@
 
 一个基于 Next.js 16 构建的智能辩论系统，通过三个 AI 模型的多轮辩论来达成共识，为复杂问题提供全面、深入的分析。
 
+![1779607601207](image/README/1779607601207.png)
+
 ## 项目简介
 
 本项目是一个创新的 AI 辩论平台，采用**三轮辩论机制**：
+
 - **第一轮**：三个 AI 模型（GLM-4-plus、GLM-4-flash、DeepSeek-chat）分别提出独立观点
 - **第二轮**：各模型互相批评和评价其他观点
 - **第三轮**：基于批评进行修正，尝试达成共识
@@ -13,6 +16,7 @@
 ## 功能特性
 
 ### 核心功能
+
 - **多模型辩论**：同时调用三个 AI 模型进行辩论
 - **三轮辩论机制**：提案 → 批评 → 共识的结构化流程
 - **会话管理**：创建、暂停、继续、删除辩论会话
@@ -20,6 +24,7 @@
 - **置顶功能**：标记重要会话
 
 ### 技术特性
+
 - **实时状态跟踪**：监控辩论进度和状态
 - **类型安全**：完整的 TypeScript 类型定义
 - **响应式设计**：适配各种设备尺寸
@@ -28,6 +33,7 @@
 ## 技术栈
 
 ### 前端
+
 - **Next.js 16** - React 框架
 - **React 19** - UI 库
 - **TypeScript** - 类型安全
@@ -37,12 +43,14 @@
 - **Sonner** - Toast 通知
 
 ### 后端
+
 - **Next.js API Routes** - RESTful API
 - **Drizzle ORM** - 数据库 ORM
 - **PostgreSQL** - 数据库
 - **Better Auth** - 身份认证
 
 ### AI 集成
+
 - **智谱 AI (GLM-4-plus & GLM-4-flash)**
 - **DeepSeek (DeepSeek-chat)**
 
@@ -102,6 +110,7 @@ ai-debate-consensus/
 ## 数据库设计
 
 ### debate_session (辩论会话表)
+
 ```sql
 CREATE TABLE "debate_session" (
     "id" text PRIMARY KEY,
@@ -122,6 +131,7 @@ CREATE TABLE "debate_session" (
 ```
 
 ### debate_messages (辩论消息表)
+
 ```sql
 CREATE TABLE "debate_messages" (
     "id" text PRIMARY KEY,
@@ -139,23 +149,28 @@ CREATE TABLE "debate_messages" (
 ## 安装和运行
 
 ### 前置要求
+
 - Node.js 18+
 - PostgreSQL 数据库
 - pnpm 包管理器
 
 ### 1. 克隆项目
+
 ```bash
 git clone <repository-url>
 cd md
 ```
 
 ### 2. 安装依赖
+
 ```bash
 pnpm install
 ```
 
 ### 3. 配置环境变量
+
 复制环境变量模板并填入你自己的密钥：
+
 ```bash
 cp .env.example .env
 ```
@@ -163,6 +178,7 @@ cp .env.example .env
 不要提交 `.env`、真实数据库连接串、API 密钥或本机工具配置。
 
 ### 4. 数据库迁移
+
 ```bash
 # 生成迁移文件
 pnpm run db:generate
@@ -175,6 +191,7 @@ pnpm run db:apply-0006
 ```
 
 ### 5. 启动开发服务器
+
 ```bash
 pnpm run dev
 ```
@@ -186,6 +203,7 @@ pnpm run dev
 ### 辩论相关 API
 
 #### 创建新辩论
+
 ```http
 POST /api/debate
 Content-Type: application/json
@@ -202,6 +220,7 @@ Response:
 ```
 
 #### 获取辩论详情
+
 ```http
 GET /api/debate/:sessionId
 
@@ -218,6 +237,7 @@ Response:
 ```
 
 #### 暂停/继续辩论
+
 ```http
 POST /api/debate/:sessionId/pause
 
@@ -228,6 +248,7 @@ Response:
 ```
 
 #### 发送用户消息
+
 ```http
 POST /api/debate/:sessionId/message
 Content-Type: application/json
@@ -238,6 +259,7 @@ Content-Type: application/json
 ```
 
 #### 继续辩论
+
 ```http
 POST /api/debate/:sessionId/continue
 
@@ -250,6 +272,7 @@ Response:
 ### 会话管理 API
 
 #### 获取会话列表
+
 ```http
 GET /api/sessions
 
@@ -260,6 +283,7 @@ Response:
 ```
 
 #### 获取单个会话
+
 ```http
 GET /api/sessions/:sessionId
 
@@ -270,6 +294,7 @@ Response:
 ```
 
 #### 更新会话
+
 ```http
 PATCH /api/sessions/:sessionId
 Content-Type: application/json
@@ -280,6 +305,7 @@ Content-Type: application/json
 ```
 
 #### 删除会话
+
 ```http
 DELETE /api/sessions/:sessionId
 
@@ -290,6 +316,7 @@ Response:
 ```
 
 #### 置顶/取消置顶
+
 ```http
 POST /api/sessions/:sessionId/pin
 Content-Type: application/json
@@ -302,7 +329,9 @@ Content-Type: application/json
 ## 开发指南
 
 ### 代码风格
+
 项目使用 ESLint 和 Prettier 进行代码规范检查：
+
 ```bash
 # 检查代码
 pnpm run lint
@@ -312,6 +341,7 @@ npx prettier --write .
 ```
 
 ### 数据库操作
+
 ```bash
 # 打开 Drizzle Studio（数据库管理界面）
 pnpm run db:studio
@@ -324,18 +354,22 @@ pnpm run db:migrate
 ```
 
 ### 添加新的 AI 模型
+
 在 `src/lib/prompts.ts` 中添加新模型配置，然后更新 API 路由中的模型调用逻辑。
 
 ## 部署
 
 ### Vercel 部署
+
 1. 推送代码到 GitHub
 2. 在 Vercel 中导入项目
 3. 配置环境变量
 4. 部署
 
 ### 其他平台
+
 确保平台支持：
+
 - Node.js 18+
 - PostgreSQL 连接
 - Serverless 函数
@@ -343,12 +377,15 @@ pnpm run db:migrate
 ## 常见问题
 
 ### Q: 如何添加新的 AI 模型？
+
 A: 在 `src/lib/prompts.ts` 中添加模型配置，并更新相关 API 路由。
 
 ### Q: 如何自定义辩论轮次？
+
 A: 修改数据库 schema 和 API 路由中的辩论逻辑。
 
 ### Q: 数据库迁移失败怎么办？
+
 A: 检查 `DATABASE_URL` 是否正确，或使用 `pnpm run db:studio` 查看数据库状态。
 
 ## 贡献指南
